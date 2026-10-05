@@ -31,8 +31,8 @@ host=$(tailscale status --json | jq -er '
 
 # These two ports belong to this project. Don't overwrite existing Serve routes.
 tailscale serve status --json | jq -e '
-  .TCP["443"] == null and .TCP["9222"] == null' >/dev/null || {
-  echo "Tailscale Serve port 443 or 9222 is already in use" >&2
+  .TCP["9223"] == null and .TCP["9222"] == null' >/dev/null || {
+  echo "Tailscale Serve port 9223 or 9222 is already in use" >&2
   exit 1
 }
 
@@ -58,16 +58,16 @@ grep -zFxq -- "--user-data-dir=$PWD/runtime/profile" "/proc/$pid/cmdline"
 
 agent-browser --session home connect 9222
 agent-browser --session home open https://www.reddit.com
-agent-browser dashboard start --allowed-origins "https://$host"
+agent-browser dashboard start --allowed-origins "https://$host:9223"
 
 # Mark routes before applying them so stop.sh can clean up a partial startup.
-touch runtime/serve-443
-sudo tailscale serve --bg --https=443 http://127.0.0.1:4848
+touch runtime/serve-9223
+sudo tailscale serve --bg --https=9223 http://127.0.0.1:4848
 touch runtime/serve-9222
 sudo tailscale serve --bg --tcp=9222 tcp://127.0.0.1:9222
 
 echo "dashboard: use the private tokenized URL printed above"
-echo "agent CDP: replace localhost in webSocketDebuggerUrl with this Tailscale IP:"
-tailscale ip -4
-curl --silent --fail http://127.0.0.1:9222/json/version
-echo
+echo "agent CDP:"
+ip=$(tailscale ip -4)
+curl --silent --fail http://127.0.0.1:9222/json/version | jq -er --arg ip "$ip" \
+  '.webSocketDebuggerUrl | sub("://[^/]+"; "://" + $ip + ":9222")'

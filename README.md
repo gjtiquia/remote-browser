@@ -14,7 +14,7 @@
 
 ## notes
 
-uses ports `9222` and `443`
+uses ports `9222` (agent CDP) and `9223` (dashboard HTTPS)
 
 ## usage
 
@@ -24,7 +24,7 @@ uses ports `9222` and `443`
 ```
 
 - open the private tokenized HTTPS URL printed by agent-browser, select `home`, and log in yourself; don't share the dashboard token
-- send the agent the printed tailscale IP and `webSocketDebuggerUrl`; the agent replaces `localhost` / `127.0.0.1` in that URL with the tailscale IP
+- send the agent the printed CDP URL; it already includes the tailscale IP
 - `start.sh` does nothing if the tracked browser is already running
 - `stop.sh` removes this project's serve routes and stops its browser/session; it does nothing if already stopped
 - if startup is interrupted or the browser crashes, run `./stop.sh` before starting again

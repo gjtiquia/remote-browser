@@ -17,10 +17,13 @@ if [[ -f runtime/serve-9222 ]]; then
   sudo tailscale serve --tcp=9222 off
   rm runtime/serve-9222
 fi
-if [[ -f runtime/serve-443 ]]; then
-  sudo tailscale serve --https=443 off
-  rm runtime/serve-443
-fi
+# Include 443 to clean up a browser started with the previous script version.
+for port in 9223 443; do
+  if [[ -f runtime/serve-$port ]]; then
+    sudo tailscale serve --https="$port" off
+    rm "runtime/serve-$port"
+  fi
+done
 
 # A crashed/partially started daemon mustn't prevent Chromium cleanup.
 agent-browser dashboard stop || echo "dashboard was unavailable" >&2
