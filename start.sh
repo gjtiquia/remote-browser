@@ -66,8 +66,16 @@ sudo tailscale serve --bg --https=9223 http://127.0.0.1:4848
 touch runtime/serve-9222
 sudo tailscale serve --bg --tcp=9222 tcp://127.0.0.1:9222
 
-echo "dashboard: use the private tokenized URL printed above"
-echo "agent CDP:"
+echo
+echo "dashboard (HTTPS 9223): open the private tokenized URL printed above"
+echo "select home and log in yourself; keep the dashboard token private"
+echo
+echo "send this CDP URL to the agent (TCP 9222; restrict access to the agent VPS):"
 ip=$(tailscale ip -4)
 curl --silent --fail http://127.0.0.1:9222/json/version | jq -er --arg ip "$ip" \
   '.webSocketDebuggerUrl | sub("://[^/]+"; "://" + $ip + ":9222")'
+echo
+echo "keep the laptop awake; run ./start.sh again after reboot"
+echo "stop with ./stop.sh; logins stay in runtime/profile/"
+echo "if startup fails, run ./stop.sh before retrying; see runtime/chromium.log"
+echo "don't run start and stop simultaneously; use Tailscale Serve, never Funnel"
