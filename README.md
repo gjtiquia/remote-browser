@@ -19,6 +19,7 @@
 ./stop.sh
 ```
 
+- starts at `about:blank`; stop clears tabs but keeps logins
 - follow the instructions printed by `start.sh`
 - `stop.sh` deliberately kills users of local ports `9222` and `4848`; reserve these ports for this project
 - runtime files and the persistent browser profile live in gitignored `./runtime/`

@@ -31,6 +31,14 @@ failed=0
 if fuser 9222/tcp 4848/tcp >/dev/null 2>&1; then
   echo "ports are still occupied; cleanup incomplete" >&2
   failed=1
+else
+  # Forget saved tabs/windows, but leave cookies and the rest of each profile alone.
+  for profile in runtime/profile/*; do
+    [[ -d "$profile" && ! -L "$profile" ]] || continue
+    rm -rf -- "$profile/Sessions"
+    rm -f -- "$profile/Current Session" "$profile/Current Tabs" \
+      "$profile/Last Session" "$profile/Last Tabs"
+  done
 fi
 
 # Tailscale errors when disabling an absent route, so skip already-cleared ports.
@@ -52,4 +60,4 @@ fi
 rm -f runtime/chromium.pid runtime/started runtime/agent-attached \
   runtime/dashboard-started runtime/serve-9222 runtime/serve-9223 runtime/serve-443
 
-echo "cleared (profile and logins kept in runtime/profile/)"
+echo "cleared (tabs reset; profile and logins kept in runtime/profile/)"

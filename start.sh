@@ -44,6 +44,7 @@ echo "starting Chromium (log: runtime/chromium.log)..."
 nohup "$chromium_command" --headless=new \
   --remote-debugging-port=9222 \
   --user-data-dir="$PWD/runtime/profile" \
+  about:blank \
   >runtime/chromium.log 2>&1 &
 
 ready=false
@@ -61,7 +62,6 @@ fi
 
 echo "attaching agent-browser..."
 agent-browser --session home connect 9222
-agent-browser --session home open https://www.reddit.com
 agent-browser dashboard start --allowed-origins "https://$host:9223"
 
 sudo tailscale serve --bg --https=9223 http://127.0.0.1:4848
@@ -77,5 +77,5 @@ curl --silent --fail http://127.0.0.1:9222/json/version | jq -er --arg ip "$ip" 
   '.webSocketDebuggerUrl | sub("://[^/]+"; "://" + $ip + ":9222")'
 echo
 echo "keep the laptop awake; run ./start.sh again after reboot"
-echo "stop with ./stop.sh; logins stay in runtime/profile/"
+echo "stop with ./stop.sh; tabs are cleared, logins stay in runtime/profile/"
 echo "don't run start and stop simultaneously; use Tailscale Serve, never Funnel"
