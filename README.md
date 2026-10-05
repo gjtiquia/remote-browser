@@ -24,3 +24,8 @@
 - `stop.sh` deliberately kills users of local ports `9222` and `4848`; reserve these ports for this project
 - runtime files and the persistent browser profile live in gitignored `./runtime/`
 
+## current status
+
+- well human interaction kind of sucks
+- the agents are able to use via CDP tho
+- perhaps should just go oldschool and do actual demote desktop-ing, kind of like using Sunshine and Moonlight perhaps
