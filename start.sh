@@ -6,7 +6,9 @@ cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
 export PATH="$HOME/.local/bin:$PATH"
 
 missing=()
-for dependency in chromium node agent-browser tailscale jq curl sudo nohup grep; do
+chromium_command=$(command -v chromium-browser || command -v chromium || true)
+[[ -n "$chromium_command" ]] || missing+=("chromium or chromium-browser")
+for dependency in node agent-browser tailscale jq curl sudo nohup grep; do
   command -v "$dependency" >/dev/null 2>&1 || missing+=("$dependency")
 done
 if (( ${#missing[@]} )); then
@@ -52,7 +54,7 @@ if curl --silent --fail --max-time 1 http://127.0.0.1:9222/json/version >/dev/nu
   exit 1
 fi
 
-nohup chromium --headless=new \
+nohup "$chromium_command" --headless=new \
   --remote-debugging-port=9222 \
   --user-data-dir="$PWD/runtime/profile" \
   >runtime/chromium.log 2>&1 &

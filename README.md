@@ -6,7 +6,7 @@
 
 ## pre-requisites
 
-- `chromium` (fedora: via `dnf`)
+- `chromium` (fedora: install via `dnf`, executable is `chromium-browser`)
 - [`node` via `nvm`](https://www.nvmnode.com/)
 - [agent-browser](https://github.com/vercel-labs/agent-browser)
 - [tailscale](https://tailscale.com/) connected, with MagicDNS / HTTPS enabled
