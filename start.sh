@@ -4,6 +4,17 @@ umask 077
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
 export PATH="$HOME/.local/bin:$PATH"
+
+missing=()
+for dependency in chromium node agent-browser tailscale jq curl sudo nohup grep; do
+  command -v "$dependency" >/dev/null 2>&1 || missing+=("$dependency")
+done
+if (( ${#missing[@]} )); then
+  echo "missing dependencies: ${missing[*]}" >&2
+  echo "install the prerequisites in README.md, then run ./start.sh again" >&2
+  exit 1
+fi
+
 export AGENT_BROWSER_SOCKET_DIR="$PWD/runtime/agent-browser"
 export AGENT_BROWSER_NAMESPACE=remote-browser
 export AGENT_BROWSER_IDLE_TIMEOUT_MS=0
