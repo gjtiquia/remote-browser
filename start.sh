@@ -8,7 +8,7 @@ export PATH="$HOME/.local/bin:$PATH"
 missing=()
 chromium_command=$(command -v chromium-browser || command -v chromium || true)
 [[ -n "$chromium_command" ]] || missing+=("chromium or chromium-browser")
-for dependency in node agent-browser tailscale jq curl sudo nohup grep fuser timeout; do
+for dependency in node agent-browser tailscale jq curl sudo nohup fuser timeout; do
   command -v "$dependency" >/dev/null 2>&1 || missing+=("$dependency")
 done
 if (( ${#missing[@]} )); then
@@ -23,29 +23,9 @@ export AGENT_BROWSER_IDLE_TIMEOUT_MS=0
 mkdir -p "$AGENT_BROWSER_SOCKET_DIR"
 chmod 700 runtime "$AGENT_BROWSER_SOCKET_DIR"
 
-# Fedora's launcher can exit while the actual browser keeps running.
-# Match the exact profile argument, not the launcher's PID or a broad process name.
-browser_pids() {
-  local file pid
-  for file in /proc/[0-9]*/cmdline; do
-    if grep -zFxq -- "--user-data-dir=$PWD/runtime/profile" "$file" 2>/dev/null; then
-      pid=${file#/proc/}
-      echo "${pid%/cmdline}"
-    fi
-  done
-}
-mapfile -t pids < <(browser_pids)
-if (( ${#pids[@]} )); then
-  if [[ -f runtime/started ]]; then
-    echo "already running"
-    exit 0
-  fi
-  echo "browser left over from an interrupted startup; run ./stop.sh first" >&2
-  exit 1
-fi
-if [[ -f runtime/started || -f runtime/agent-attached || -f runtime/dashboard-started ||
-      -f runtime/serve-9222 || -f runtime/serve-9223 || -f runtime/serve-443 ]]; then
-  echo "previous setup needs cleanup; run ./stop.sh first" >&2
+# Start requires a clean slate; stop.sh deliberately clears these ports.
+if fuser 9222/tcp 4848/tcp >/dev/null 2>&1; then
+  echo "port 9222 or 4848 is occupied; run ./stop.sh before starting" >&2
   exit 1
 fi
 
@@ -57,14 +37,9 @@ host=$(tailscale status --json | jq -er '
 }
 tailscale serve status --json | jq -e '
   .TCP["9223"] == null and .TCP["9222"] == null' >/dev/null || {
-  echo "Tailscale Serve port 9223 or 9222 is already in use" >&2
+  echo "Tailscale Serve port 9223 or 9222 is already configured; run ./stop.sh first" >&2
   exit 1
 }
-if curl --silent --fail --max-time 1 http://127.0.0.1:9222/json/version >/dev/null; then
-  echo "CDP port 9222 is occupied by a browser outside this project's profile; refusing to attach" >&2
-  exit 1
-fi
-
 echo "starting Chromium (log: runtime/chromium.log)..."
 nohup "$chromium_command" --headless=new \
   --remote-debugging-port=9222 \
@@ -79,23 +54,17 @@ for ((i = 0; i < 30; i++)); do
   fi
   sleep 1
 done
-mapfile -t pids < <(browser_pids)
-if [[ "$ready" != true ]] || (( ${#pids[@]} == 0 )); then
-  echo "Chromium didn't start with this project's profile; see runtime/chromium.log" >&2
+if [[ "$ready" != true ]]; then
+  echo "CDP port 9222 didn't become ready; see runtime/chromium.log, then run ./stop.sh" >&2
   exit 1
 fi
 
 echo "attaching agent-browser..."
-touch runtime/agent-attached
 agent-browser --session home connect 9222
 agent-browser --session home open https://www.reddit.com
-touch runtime/dashboard-started
 agent-browser dashboard start --allowed-origins "https://$host:9223"
 
-# Mark routes before applying them so stop.sh can clean up a partial startup.
-touch runtime/serve-9223
 sudo tailscale serve --bg --https=9223 http://127.0.0.1:4848
-touch runtime/serve-9222
 sudo tailscale serve --bg --tcp=9222 tcp://127.0.0.1:9222
 
 echo
@@ -106,7 +75,6 @@ echo "send this CDP URL to the agent (TCP 9222; restrict access to the agent VPS
 ip=$(tailscale ip -4)
 curl --silent --fail http://127.0.0.1:9222/json/version | jq -er --arg ip "$ip" \
   '.webSocketDebuggerUrl | sub("://[^/]+"; "://" + $ip + ":9222")'
-touch runtime/started
 echo
 echo "keep the laptop awake; run ./start.sh again after reboot"
 echo "stop with ./stop.sh; logins stay in runtime/profile/"
