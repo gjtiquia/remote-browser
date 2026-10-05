@@ -8,7 +8,7 @@ export PATH="$HOME/.local/bin:$PATH"
 missing=()
 chromium_command=$(command -v chromium-browser || command -v chromium || true)
 [[ -n "$chromium_command" ]] || missing+=("chromium or chromium-browser")
-for dependency in node agent-browser tailscale jq curl sudo nohup grep; do
+for dependency in node agent-browser tailscale jq curl sudo nohup grep fuser timeout; do
   command -v "$dependency" >/dev/null 2>&1 || missing+=("$dependency")
 done
 if (( ${#missing[@]} )); then

@@ -10,7 +10,7 @@
 - [`node` via `nvm`](https://www.nvmnode.com/)
 - [agent-browser](https://github.com/vercel-labs/agent-browser)
 - [tailscale](https://tailscale.com/) connected, with MagicDNS / HTTPS enabled
-- `jq` and `curl`
+- `jq`, `curl`, and `fuser` (fedora: `dnf install psmisc` for `fuser`)
 
 ## usage
 
@@ -20,5 +20,6 @@
 ```
 
 - follow the instructions printed by `start.sh`
+- `stop.sh` deliberately kills users of local ports `9222` and `4848`; reserve these ports for this project
 - runtime files and the persistent browser profile live in gitignored `./runtime/`
 
